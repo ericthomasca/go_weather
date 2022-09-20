@@ -1,15 +1,20 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"os"
-	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 )
+
+const kelvin_zero float64 = -273.15
+const mps_to_kmph float64 = 3.6
 
 type WeatherData struct {
 	Coord struct {
@@ -66,30 +71,63 @@ func init() {
   }
 
 func main() {
-	args := os.Args
+	// args := os.Args
 	
 	api_key := os.Getenv("OPEN_WEATHER_MAP_API")
-	zip_code := strings.ToUpper(args[1])
-	country_code := strings.ToUpper(args[2])
+	zip_code := "A2H"
+	// zip_code := strings.ToUpper(args[1])
+	country_code := "CA"
+	// country_code := strings.ToUpper(args[2])
 
 	api_url := "https://api.openweathermap.org/data/2.5/weather?appid=" + api_key + "&zip=" + zip_code + "," + country_code
 
-	response, err := http.Get(api_url)
+	weather_data := getData(api_url)
+
+	fmt.Println("==============================")
+	fmt.Println("========  Go Weather  ========")
+    fmt.Println("==============================")
+    fmt.Println()
+
+	city := weather_data.Name
+	lat := weather_data.Coord.Lat
+	lon := weather_data.Coord.Lon
+	updated_datetime_unix := weather_data.Dt
+	timezone_unix := weather_data.Timezone
+
+	updated_datetime := time.Unix(int64(updated_datetime_unix + timezone_unix), 0)
+    
+	fmt.Printf("Weather for %s (%v, %v)\n", city, lat, lon)
+    fmt.Printf("Last Updated: %v\n", updated_datetime)
+    fmt.Println()
+	
+	temperature := int(math.Round(weather_data.Main.Temp + kelvin_zero))
+	feels_like := int(math.Round(weather_data.Main.FeelsLike + kelvin_zero))
+	conditions := weather_data.Weather[0].Main
+
+	fmt.Printf("%vC (Feels like %vC) %s", temperature, feels_like, conditions)
+
+
+	
+}
+
+func getData(api_url string) WeatherData {
+	res, err := http.Get(api_url)
 
 	if err != nil {
 		fmt.Print(err.Error())
 		os.Exit(1)
 	}
 
-	responseData, err := io.ReadAll(response.Body)
+	body, err := io.ReadAll(res.Body)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(string(responseData))
+	var weather_data WeatherData
 
-	
+	json.Unmarshal([]byte(body), &weather_data)
+	return weather_data
 }
 
 
