@@ -65,15 +65,15 @@ type WeatherData struct {
 func init() {
 
 	err := godotenv.Load(".env")
-  
+
 	if err != nil {
-	  log.Fatalf("Error loading .env file")
+		log.Fatalf("Error loading .env file")
 	}
-  }
+}
 
 func main() {
 	args := os.Args
-	
+
 	api_key := os.Getenv("OPEN_WEATHER_MAP_API")
 	zip_code := strings.ToUpper(args[1])
 	country_code := strings.ToUpper(args[2])
@@ -84,19 +84,19 @@ func main() {
 
 	fmt.Println("==============================")
 	fmt.Println("========  Go Weather  ========")
-    fmt.Println("==============================")
-    fmt.Println()
+	fmt.Println("==============================")
+	fmt.Println()
 
 	city := weather_data.Name
 	lat := weather_data.Coord.Lat
 	lon := weather_data.Coord.Lon
 
-	updated_datetime := time.Unix(int64(weather_data.Dt + weather_data.Timezone), 0)
-    
+	updated_datetime := time.Unix(int64(weather_data.Dt+weather_data.Timezone), 0)
+
 	fmt.Printf("Weather for %s (%v, %v)\n", city, lat, lon)
-    fmt.Printf("Last Updated: %v\n", updated_datetime)
-    fmt.Println()
-	
+	fmt.Printf("Last Updated: %v\n", updated_datetime)
+	fmt.Println()
+
 	temperature := int(math.Round(weather_data.Main.Temp + kelvin_zero))
 	feels_like := int(math.Round(weather_data.Main.FeelsLike + kelvin_zero))
 	conditions := weather_data.Weather[0].Main
@@ -113,14 +113,11 @@ func main() {
 
 	fmt.Printf("Wind: %vkm/h %s\n", wind_speed, wind_dir)
 
-	sunrise := time.Unix(int64(weather_data.Sys.Sunrise + weather_data.Timezone), 0)
-	sunset := time.Unix(int64(weather_data.Sys.Sunset + weather_data.Timezone), 0)
+	sunrise := time.Unix(int64(weather_data.Sys.Sunrise+weather_data.Timezone), 0)
+	sunset := time.Unix(int64(weather_data.Sys.Sunset+weather_data.Timezone), 0)
 
 	fmt.Printf("Sunrise: %v:%v  Sunset: %v:%v\n", sunrise.Hour(), sunrise.Minute(), sunset.Hour(), sunset.Minute())
 
-	
-
-	
 }
 
 func getData(api_url string) WeatherData {
@@ -145,13 +142,12 @@ func getData(api_url string) WeatherData {
 
 func deg_to_cardinal(deg int) string {
 	dirs := [16]string{
-		"N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", 
+		"N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
 		"S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW",
 	}
-	
+
 	ix := int(math.Round((float64(deg) + 11.25) / 22.5))
 	dir_index := ix % 16
 	cardinal := dirs[dir_index]
 	return cardinal
 }
-
