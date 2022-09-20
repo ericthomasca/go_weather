@@ -8,6 +8,7 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -71,13 +72,11 @@ func init() {
   }
 
 func main() {
-	// args := os.Args
+	args := os.Args
 	
 	api_key := os.Getenv("OPEN_WEATHER_MAP_API")
-	zip_code := "A2H"
-	// zip_code := strings.ToUpper(args[1])
-	country_code := "CA"
-	// country_code := strings.ToUpper(args[2])
+	zip_code := strings.ToUpper(args[1])
+	country_code := strings.ToUpper(args[2])
 
 	api_url := "https://api.openweathermap.org/data/2.5/weather?appid=" + api_key + "&zip=" + zip_code + "," + country_code
 
@@ -91,10 +90,8 @@ func main() {
 	city := weather_data.Name
 	lat := weather_data.Coord.Lat
 	lon := weather_data.Coord.Lon
-	updated_datetime_unix := weather_data.Dt
-	timezone_unix := weather_data.Timezone
 
-	updated_datetime := time.Unix(int64(updated_datetime_unix + timezone_unix), 0)
+	updated_datetime := time.Unix(int64(weather_data.Dt + weather_data.Timezone), 0)
     
 	fmt.Printf("Weather for %s (%v, %v)\n", city, lat, lon)
     fmt.Printf("Last Updated: %v\n", updated_datetime)
@@ -104,8 +101,24 @@ func main() {
 	feels_like := int(math.Round(weather_data.Main.FeelsLike + kelvin_zero))
 	conditions := weather_data.Weather[0].Main
 
-	fmt.Printf("%vC (Feels like %vC) %s", temperature, feels_like, conditions)
+	fmt.Printf("%vC (Feels like %vC) %s\n", temperature, feels_like, conditions)
 
+	temp_high := int(math.Round(weather_data.Main.TempMax + kelvin_zero))
+	temp_low := int(math.Round(weather_data.Main.TempMin + kelvin_zero))
+
+	fmt.Printf("High: %vC  Low: %vC\n", temp_high, temp_low)
+
+	wind_speed := math.Round(weather_data.Wind.Speed * mps_to_kmph)
+	wind_dir := deg_to_cardinal(weather_data.Wind.Deg)
+
+	fmt.Printf("Wind: %vkm/h %s\n", wind_speed, wind_dir)
+
+	sunrise := time.Unix(int64(weather_data.Sys.Sunrise + weather_data.Timezone), 0)
+	sunset := time.Unix(int64(weather_data.Sys.Sunset + weather_data.Timezone), 0)
+
+	fmt.Printf("Sunrise: %v:%v  Sunset: %v:%v\n", sunrise.Hour(), sunrise.Minute(), sunset.Hour(), sunset.Minute())
+
+	
 
 	
 }
@@ -130,6 +143,15 @@ func getData(api_url string) WeatherData {
 	return weather_data
 }
 
+func deg_to_cardinal(deg int) string {
+	dirs := [16]string{
+		"N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", 
+		"S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW",
+	}
+	
+	ix := int(math.Round((float64(deg) + 11.25) / 22.5))
+	dir_index := ix % 16
+	cardinal := dirs[dir_index]
+	return cardinal
+}
 
-
-  
